@@ -1,0 +1,1 @@
+web: gunicorn image_forgery.wsgi --workers 1 --timeout 120

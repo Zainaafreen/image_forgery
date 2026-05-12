@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🕵️‍♂️ Image Forgery Detection </title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --primary-dark: #008188;
+            --secondary: #4facfe;
+            --accent: #ff4c29;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0b0f19 url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop') center/cover fixed;
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Ambient overlay */
+        .ambient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 15, 30, 0.95) 100%);
+            z-index: -1;
+        }
+
+        /* Animated background elements */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .orb-1 {
+            width: 250px;
+            height: 250px;
+            background: var(--primary);
+            top: 10%;
+            left: 5%;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: 10%;
+            right: 5%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(30px, 60px) scale(1.1) rotate(180deg);
+            }
+
+            100% {
+                transform: translate(-30px, 30px) scale(0.9) rotate(360deg);
+            }
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 10px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand-custom {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.3rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            transition: opacity 0.3s;
+        }
+
+        .navbar-brand-custom:hover {
+            opacity: 0.8;
+            color: #fff;
+        }
+
+        .navbar-brand-custom i {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 6px 18px;
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.8);
+            border-color: rgba(239, 68, 68, 1);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Center it nicely for laptops */
+            padding: 20px;
+        }
+
+        /* Glassmorphic Dashboard Card */
+        .predict-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            padding: 50px;
+            /* reduced from 40px */
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            max-width: 900px;
+            /* slightly wider to fit side-by-side content */
+            width: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: cardEntrance 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .predict-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .predict-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+            background-size: 200% auto;
+            border-radius: 20px 20px 0 0;
+            animation: gradientMove 3s linear infinite;
+        }
+
+        @keyframes gradientMove {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 20px;
+            /* reduced */
+        }
+
+        .header-title h2 {
+            font-weight: 800;
+            color: #fff;
+            font-size: 2.6rem;
+            /* reduced from 2.2rem */
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            /* reduced */
+            margin: 0;
+        }
+
+        /* Advanced File Input */
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+            /* reduced */
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .file-upload-wrapper:hover {
+            transform: translateY(-3px);
+        }
+
+        .form-control[type="file"] {
+            background: rgba(15, 23, 42, 0.4);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            padding: 45px 30px;
+            /* heavily reduced padding */
+            border-radius: 14px;
+            text-align: center;
+            font-size: 1rem;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .form-control[type="file"]:hover,
+        .form-control[type="file"]:focus {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: var(--primary);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.15) inset;
+        }
+
+        .form-control[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            /* reduced */
+            border-radius: 8px;
+            margin-right: 15px;
+            font-weight: 600;
+            font-size: 1.15rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .form-control[type="file"]::file-selector-button:hover {
+            background: var(--primary);
+            color: #0b0f19;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+
+        /* Advanced Button with Shimmer */
+        .btn-predict {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #0b0f19;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            /* reduced */
+            font-size: 1.2rem;
+            /* reduced */
+            font-weight: 800;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3);
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .btn-predict::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+            transform: skewX(-25deg);
+            animation: shimmer 3s infinite;
+            z-index: -1;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+
+            20% {
+                left: 200%;
+            }
+
+            100% {
+                left: 200%;
+            }
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0, 242, 254, 0.4);
+            color: #fff;
+        }
+
+        .btn-predict:active {
+            transform: translateY(1px) scale(0.99);
+        }
+
+        /* Error Alert */
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Results Section Styling: Flexbox added for Laptop side-by-side fit */
+        .results-container {
+            margin-top: 25px;
+            /* reduced */
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .image-preview-wrapper {
+            flex: 1;
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #000;
+            animation: springUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform-origin: center bottom;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes springUp {
+            0% {
+                transform: scale(0.9) translateY(15px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .uploaded-img {
+            width: 100%;
+            max-height: 280px;
+            /* fit better on lap screen */
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Scanning effect overlay */
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
+            animation: scan 2.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 5%;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 95%;
+                opacity: 0;
+            }
+        }
+
+        .result-dashboard {
+            flex: 1.2;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 14px;
+            padding: 20px;
+            /* reduced */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: slideUpFade 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+            transform: translateY(15px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            /* reduced */
+        }
+
+        .status-badge {
+            padding: 8px 18px;
+            /* reduced */
+            border-radius: 20px;
+            font-size: 1.2rem;
+            /* reduced */
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-badge.fake {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .status-badge.real {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+
+        .confidence-circle {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            /* reduced */
+            border-radius: 12px;
+            margin-bottom: 15px;
+            /* reduced */
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .confidence-circle h5 {
+            color: #cbd5e1;
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .confidence-score {
+            font-size: 2.5rem;
+            /* reduced from 3.5rem */
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* Progress bars with staggered loading */
+        .stats-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* reduced */
+        }
+
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.9rem;
+            /* reduced */
+        }
+
+        .label-real {
+            color: #34d399;
+        }
+
+        .label-fake {
+            color: #f87171;
+        }
+
+        .progress-track {
+            height: 10px;
+            /* reduced */
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 8px;
+            width: 0%;
+        }
+
+        .fill-real {
+            background: linear-gradient(90deg, #059669, #34d399);
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+            animation: fillBar 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: 0.4s;
+        }
+
+        .fill-fake {
+            background: linear-gradient(90deg, #dc2626, #f87171);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+            animation: fillBar 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: 0.6s;
+        }
+
+        @keyframes fillBar {
+            from {
+                width: 0%;
+            }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 15px 0;
+            /* reduced */
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            background: rgba(10, 15, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: auto;
+        }
+
+        footer i {
+            color: var(--primary);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 850px) {
+
+            /* increased breakpoint so flex column happens sooner */
+            .results-container {
+                flex-direction: column;
+            }
+
+            .predict-card {
+                max-width: 500px;
+                padding: 20px;
+            }
+
+            .header-title h2 {
+                font-size: 1.5rem;
+            }
+
+            .confidence-score {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Background Elements -->
+    <div class="ambient-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Top Navbar -->
+    <nav class="navbar-custom">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand-custom" href="#">
+                <i class="bi bi-shield-check"></i>
+                <span>Forgery Detector Protocol</span>
+            </a>
+            <a href="{% url 'logout' %}" class="logout-btn">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="predict-card">
+
+            <div class="header-title">
+                <h2>Media Authentication</h2>
+                <p>Upload files securely. Our AI engine instantly analyzes pixel-level exception.</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="file-upload-wrapper">
+                    <input type="file" name="image" class="form-control" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn-predict">
+                    <i class="bi bi-cpu"></i> Initiate Analysis
+                </button>
+            </form>
+
+            {% if error %}
+            <div class="alert-error">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="results-container">
+
+                {% if img_url %}
+                <div class="image-preview-wrapper">
+                    <img src="{{ img_url }}" class="img-fluid uploaded-img" alt="Uploaded Document">
+                    <div class="scanner-line"></div>
+                </div>
+                {% endif %}
+
+                <div class="result-dashboard">
+                    <div class="result-header">
+                        <div class="status-badge {% if result == 'Fake' %}fake{% else %}real{% endif %}">
+                            <i
+                                class="bi {% if result == 'Fake' %}bi-x-octagon-fill{% else %}bi-check-circle-fill{% endif %} me-2"></i>
+                            {{ result }}
+                        </div>
+                    </div>
+
+                    <div class="confidence-circle">
+                        <h5>AI Confidence Level</h5>
+                        <p class="confidence-score">{{ confidence }}%</p>
+                    </div>
+
+                    <div class="stats-breakdown">
+                        <div class="stat-row">
+                            <div class="stat-labels label-real">
+                                <span><i class="bi bi-shield-fill-check me-1"></i> Authentic Probability</span>
+                                <span>{{ real_percent }}%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill fill-real"
+                                    style="--final-width: {{ real_percent }}%; width: var(--final-width);"></div>
+                            </div>
+                        </div>
+
+                        <div class="stat-row mt-2">
+                            <div class="stat-labels label-fake">
+                                <span><i class="bi bi-shield-fill-x me-1"></i> Forgery Probability</span>
+                                <span>{{ fake_percent }}%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill fill-fake"
+                                    style="--final-width: {{ fake_percent }}%; width: var(--final-width);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {% endif %}
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            &copy; 2026 Image Forgery Detection System
+        </div>
+    </footer>
+
+</body>
+
+</html>
