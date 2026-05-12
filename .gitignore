@@ -3,6 +3,7 @@
 # =========================
 .env
 .env.*
+!.env.example
 
 # =========================
 # ML Models (too large / external storage)
@@ -12,6 +13,10 @@
 *.pkl
 *.joblib
 *.onnx
+*.hdf5
+*.tflite
+models/
+saved_models/
 
 # =========================
 # Python
@@ -26,6 +31,7 @@ dist/
 build/
 venv/
 env/
+.ipynb_checkpoints/
 
 # =========================
 # Django
@@ -35,7 +41,7 @@ media/
 staticfiles/
 
 # =========================
-# Logs & runtime
+# Logs
 # =========================
 *.log
 
@@ -51,4 +57,7 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
+# =========================
+# Dataset
+# =========================
 dataset/
