@@ -9,6 +9,7 @@
 # ML Models (too large / external storage)
 # =========================
 *.h5
+!mobilenet_project.h5
 *.keras
 *.pkl
 *.joblib
@@ -30,6 +31,7 @@ __pycache__/
 dist/
 build/
 venv/
+.venv/
 env/
 .ipynb_checkpoints/
 

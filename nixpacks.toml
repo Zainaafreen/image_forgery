@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python311", "libstdcxx5"]
+
+[phases.install]
+cmds = [
+  "pip install --upgrade pip",
+  "pip install --no-cache-dir -r requirements.txt"
+]
+
+[start]
+cmd = "gunicorn image_forgery.wsgi:application --bind 0.0.0.0:$PORT"
