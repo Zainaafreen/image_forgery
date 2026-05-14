@@ -4,8 +4,6 @@ import numpy as np
 import logging
 import cv2
 
-os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Force TF to use tf.keras not Keras 3
-
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D
 
