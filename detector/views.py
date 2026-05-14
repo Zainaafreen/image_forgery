@@ -1,4 +1,5 @@
 import os
+import base64
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
@@ -91,7 +92,14 @@ class PredictView(View):
             context["error"] = f"Image must be under {MAX_SIZE_MB}MB."
             return render(request, "index.html", context)
 
+        # Read image bytes for base64 display BEFORE uploading
+        uploaded_image.seek(0)
+        img_bytes = uploaded_image.read()
+        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        img_data_url = f"data:{uploaded_image.content_type};base64,{img_b64}"
+
         # Save via default_storage (Cloudinary in production)
+        uploaded_image.seek(0)
         filename = default_storage.save(uploaded_image.name, uploaded_image)
         img_url = default_storage.url(filename)
 
@@ -99,7 +107,7 @@ class PredictView(View):
             prediction_result = predict_image(img_url)
 
             context.update({
-                "img_url": img_url,
+                "img_url": img_data_url,  # base64 inline — always available, even after Cloudinary delete
                 "result": prediction_result["result"],
                 "confidence": prediction_result["confidence"],
                 "fake_percent": prediction_result["details"]["Fake"],

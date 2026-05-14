@@ -10,13 +10,11 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    ".railway.app",
-    "imageforgery-production-08c0.up.railway.app",
+    ".up.railway.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.up.railway.app",
-    "https://imageforgery-production-2759.up.railway.app/",
 ]
 
 INSTALLED_APPS = [
@@ -25,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',
+    'cloudinary_storage',          # must be before staticfiles
     'django.contrib.staticfiles',
     'cloudinary',
     'detector',
@@ -80,17 +78,17 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# Cloudinary for persistent media storage
+# Cloudinary for persistent media storage (Django 5.x style)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",  # plain, no compression
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# For django-cloudinary-storage 0.3.0 compatibility
+# Required by django-cloudinary-storage 0.3.0 which reads this directly (not Django 5.x compatible)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 CLOUDINARY_STORAGE = {
@@ -110,6 +108,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# WhiteNoise serves and compresses static files at runtime
+WHITENOISE_AUTOREFRESH = True
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -121,5 +122,3 @@ LOGGING = {
         "level": "INFO",
     },
 }
-
-WHITENOISE_AUTOREFRESH = True
