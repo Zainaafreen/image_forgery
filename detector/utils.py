@@ -3,6 +3,8 @@ import os
 import numpy as np
 import logging
 import cv2
+import urllib.request
+import tempfile
 
 import tensorflow as tf
 from keras.models import load_model
@@ -34,10 +36,22 @@ def load_custom_model():
         logger.debug("Model loaded OK")
     return _model
 
-def predict_image(img_path):
+def predict_image(img_path_or_url):
     model = load_custom_model()
 
-    img = cv2.imread(img_path)
+    # Handle both local paths and Cloudinary URLs
+    if img_path_or_url.startswith('http'):
+        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+            urllib.request.urlretrieve(img_path_or_url, tmp.name)
+            tmp_path = tmp.name
+    else:
+        tmp_path = img_path_or_url
+
+    img = cv2.imread(tmp_path)
+
+    if img_path_or_url.startswith('http'):
+        os.unlink(tmp_path)
+
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (224, 224))
     img = img.astype('float32') / 255.0
@@ -58,7 +72,7 @@ def predict_image(img_path):
         conf = confidence["Fake"]
 
     logger.debug("\n" + "="*50)
-    logger.debug("Image: %s", os.path.basename(img_path))
+    logger.debug("Image: %s", os.path.basename(img_path_or_url))
     logger.debug("Raw probs [Fake, Real]: %s", [confidence["Fake"], confidence["Real"]])
     logger.debug("Predicted: %s (%.2f%%)", result, conf)
     logger.debug("="*50 + "\n")
