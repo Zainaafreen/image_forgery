@@ -3,9 +3,11 @@ import os
 import numpy as np
 import logging
 import cv2
+
+os.environ["TF_USE_LEGACY_KERAS"] = "1"  # Force TF to use tf.keras not Keras 3
+
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D, InputLayer as BaseInputLayer
-import tensorflow as tf
+from tensorflow.keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D
 
 logger = logging.getLogger(__name__)
 
@@ -13,22 +15,6 @@ class CustomDepthwiseConv2D(BaseDepthwiseConv2D):
     def __init__(self, *args, **kwargs):
         kwargs.pop('groups', None)
         super().__init__(*args, **kwargs)
-
-class CustomInputLayer(BaseInputLayer):
-    def __init__(self, *args, **kwargs):
-        kwargs.pop('batch_shape', None)
-        kwargs.pop('sparse', None)
-        kwargs.pop('ragged', None)
-        super().__init__(*args, **kwargs)
-
-    @classmethod
-    def from_config(cls, config):
-        if 'batch_shape' in config:
-            batch_shape = config.pop('batch_shape')
-            config['batch_input_shape'] = batch_shape
-        config.pop('sparse', None)
-        config.pop('ragged', None)
-        return super().from_config(config)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "mobilenet_project.h5")
@@ -43,10 +29,7 @@ def load_custom_model():
         logger.debug(f"Loading model: {MODEL_PATH}")
         _model = load_model(
             MODEL_PATH,
-            custom_objects={
-                'DepthwiseConv2D': CustomDepthwiseConv2D,
-                'InputLayer': CustomInputLayer,
-            },
+            custom_objects={'DepthwiseConv2D': CustomDepthwiseConv2D},
             compile=False
         )
         logger.debug("Model loaded OK")
