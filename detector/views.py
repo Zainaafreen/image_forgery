@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.views import View
-from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.core.files.storage import default_storage
 
 from .utils import predict_image
 
@@ -90,16 +90,16 @@ class PredictView(View):
         if uploaded_image.size > MAX_SIZE_MB * 1024 * 1024:
             context["error"] = f"Image must be under {MAX_SIZE_MB}MB."
             return render(request, "index.html", context)
-        
-        fs = FileSystemStorage()
-        filename = fs.save(uploaded_image.name, uploaded_image)
-        img_path = fs.path(filename)           # full server path
-        
+
+        # Save via default_storage (Cloudinary in production)
+        filename = default_storage.save(uploaded_image.name, uploaded_image)
+        img_url = default_storage.url(filename)
+
         try:
-            prediction_result = predict_image(img_path)
+            prediction_result = predict_image(img_url)
 
             context.update({
-                "img_url": fs.url(filename),
+                "img_url": img_url,
                 "result": prediction_result["result"],
                 "confidence": prediction_result["confidence"],
                 "fake_percent": prediction_result["details"]["Fake"],
@@ -111,9 +111,9 @@ class PredictView(View):
             context["error"] = f"Prediction failed: {str(e)}"
 
         finally:
+            # Clean up from Cloudinary after prediction
             try:
-                if os.path.exists(img_path):
-                    os.remove(img_path)
+                default_storage.delete(filename)
             except Exception:
                 pass
 
