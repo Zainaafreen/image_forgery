@@ -5,6 +5,7 @@ import logging
 import cv2
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D, InputLayer as BaseInputLayer
+import tensorflow as tf
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,19 @@ class CustomDepthwiseConv2D(BaseDepthwiseConv2D):
 
 class CustomInputLayer(BaseInputLayer):
     def __init__(self, *args, **kwargs):
-        if 'batch_shape' in kwargs:
-            kwargs['shape'] = kwargs.pop('batch_shape')[1:]
+        kwargs.pop('batch_shape', None)
+        kwargs.pop('sparse', None)
+        kwargs.pop('ragged', None)
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def from_config(cls, config):
+        if 'batch_shape' in config:
+            batch_shape = config.pop('batch_shape')
+            config['batch_input_shape'] = batch_shape
+        config.pop('sparse', None)
+        config.pop('ragged', None)
+        return super().from_config(config)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "mobilenet_project.h5")
@@ -50,7 +61,7 @@ def predict_image(img_path):
     img = img.astype('float32') / 255.0
     img = np.expand_dims(img, axis=0)
 
-    preds = model.predict(img, verbose=0)[0]  # [p0, p1]
+    preds = model.predict(img, verbose=0)[0]
 
     confidence = {
         "Fake": round(float(preds[0]) * 100, 2),
