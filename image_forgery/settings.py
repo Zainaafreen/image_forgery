@@ -90,7 +90,6 @@ CLOUDINARY_STORAGE = {
 }
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # fallback for local dev
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
