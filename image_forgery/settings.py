@@ -15,8 +15,8 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.railway.app",
-    "https://imageforgery-production-08c0.up.railway.app",
+    "https://*.up.railway.app",
+    "https://imageforgery-production-2759.up.railway.app/",
 ]
 
 INSTALLED_APPS = [
@@ -106,7 +106,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 LOGGING = {
     "version": 1,
@@ -119,3 +118,5 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+WHITENOISE_AUTOREFRESH = True
