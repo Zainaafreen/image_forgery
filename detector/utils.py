@@ -4,8 +4,9 @@ import numpy as np
 import logging
 import cv2
 
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D
+import tensorflow as tf
+from keras.models import load_model
+from keras.layers import DepthwiseConv2D as BaseDepthwiseConv2D
 
 logger = logging.getLogger(__name__)
 
