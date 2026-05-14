@@ -86,12 +86,12 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # ← not Manifest
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",  # plain, no compression
     },
 }
 
 # For django-cloudinary-storage 0.3.0 compatibility
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'  # ← not Manifest
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
