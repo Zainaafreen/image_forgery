@@ -17,9 +17,10 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
+    "imageforgery-production-2759.up.railway.app",
+    ".railway.app",
     "127.0.0.1",
     "localhost",
-    ".up.railway.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
