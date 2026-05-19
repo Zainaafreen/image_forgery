@@ -4,6 +4,15 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Your source static files
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Where collectstatic will put the files for production
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# URL for serving static files
+STATIC_URL = "/static/"
+
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -104,9 +113,6 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise serves and compresses static files at runtime
 WHITENOISE_AUTOREFRESH = True
